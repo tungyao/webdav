@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"flag"
 	"fmt"
 	"golang.org/x/net/webdav"
@@ -10,7 +11,7 @@ import (
 
 func main() {
 	var addr *string
-	var path = "/mnt"
+	var path = "."
 	var uname *string
 	var upass *string
 	var errs int64
@@ -19,7 +20,7 @@ func main() {
 	upass = flag.String("upass", "zxc", "")
 	flag.Parse()
 	fmt.Println(*addr, path, *uname, *upass)
-	fs := &webdav.Handler{
+	fss := &webdav.Handler{
 		FileSystem: webdav.Dir(path),
 		LockSystem: webdav.NewMemLS(),
 	}
@@ -45,7 +46,13 @@ func main() {
 			http.Error(w, "WebDAV: need authorized!", http.StatusUnauthorized)
 			return
 		}
-		fs.ServeHTTP(w, req)
+
+		if req.Method == "GET" {
+			http.FileServer(http.Dir(path)).ServeHTTP(w, req)
+			return
+		}
+
+		fss.ServeHTTP(w, req)
 	})
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
