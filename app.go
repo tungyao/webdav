@@ -11,7 +11,7 @@ import (
 
 func main() {
 	var addr *string
-	var path = "."
+	var path = "/mnt"
 	var uname *string
 	var upass *string
 	var errs int64
