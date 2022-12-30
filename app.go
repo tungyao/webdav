@@ -15,17 +15,19 @@ func main() {
 	var uname *string
 	var upass *string
 	var errs int64
+	var errMAx *int64
 	addr = flag.String("addr", ":80", "")
 	uname = flag.String("uname", "zxc", "")
 	upass = flag.String("upass", "zxc", "")
+	errMAx = flag.Int64("maxerr", 0, "")
 	flag.Parse()
-	fmt.Println(*addr, path, *uname, *upass)
+	fmt.Println(*addr, path, *uname, *upass, *errMAx)
 	fss := &webdav.Handler{
 		FileSystem: webdav.Dir(path),
 		LockSystem: webdav.NewMemLS(),
 	}
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		if errs > 5 {
+		if *errMAx != 0 && errs > *errMAx {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			http.Error(w, "WebDAV: login time is more", http.StatusUnauthorized)
 			return
