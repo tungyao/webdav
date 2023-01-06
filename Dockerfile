@@ -1,9 +1,7 @@
 FROM golang:1.19
 WORKDIR /home
-COPY go.mod ./
-RUN go mod download && go mod verify
 COPY . .
-RUN go build -v -o /home/webdav ./...
+RUN chmod +x /home/webdav
 ENV UNAME = "zxc"
 ENV UPASS = "zxc"
 ENV MAXERR = "0"
