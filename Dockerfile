@@ -1,7 +1,9 @@
-FROM ubuntu
+FROM golang:1.19
 WORKDIR /home
-COPY webdav webdav
-RUN chmod +x /home/webdav
+COPY go.mod ./
+RUN go mod download && go mod verify
+COPY . .
+RUN go build -v -o /home/webdav ./...
 ENV UNAME = "zxc"
 ENV UPASS = "zxc"
 ENV MAXERR = "0"
