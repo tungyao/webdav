@@ -41,7 +41,7 @@ func main() {
 	var errs int64
 	var errMAx *int64
 	var runMode uint8
-	addr = flag.String("addr", ":7000", "")
+	addr = flag.String("addr", ":80", "")
 	uname = flag.String("uname", "zxc", "")
 	upass = flag.String("upass", "zxc", "")
 	errMAx = flag.Int64("maxerr", 0, "")
@@ -69,7 +69,6 @@ func main() {
 	}
 	go AccountPanel()
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		log.Println(req.Method)
 		if *errMAx != 0 && errs > *errMAx {
 			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
 			http.Error(w, "WebDAV: login time is more", http.StatusUnauthorized)
