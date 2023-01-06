@@ -1,4 +1,4 @@
-FROM golang:1.19
+FROM ubuntu
 WORKDIR /home
 COPY . .
 RUN chmod +x /home/webdav
