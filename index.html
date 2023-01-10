@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style>
+        .is-dir {
+            color: darkgreen;
+        }
+        .is-file {
+            color: black;
+        }
+    </style>
+    <title>Document</title>
+</head>
+<body>
+<table>
+    <tr>
+        <td>File name</td>
+        <td>File size</td>
+    </tr>
+    {{range $k,$v:= .Files}}
+    <tr>
+        <td><a href="/{{$v.Name}}" class="{{if $v.IsDir}} is-dir {{end}}" {{if $v.IsDir}} {{else}} download="{{$v.Name}}" {{end}}>{{$v.Name}}</a></td>
+        <td>{{$v.Size}}</td>
+    </tr>
+    {{end}}
+</table>
+</body>
+</html>
