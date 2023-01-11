@@ -43,13 +43,14 @@ var (
 )
 
 func main() {
+	log.SetFlags(log.Llongfile)
 	var addr *string
-	var path = "/home/dong/aaa/webdav"
+	var path = "/mnt"
 	var uname *string
 	var upass *string
-	//var errs int64
+	var errs int64
 	var errMAx *int64
-	addr = flag.String("addr", ":10000", "")
+	addr = flag.String("addr", ":80", "")
 	uname = flag.String("uname", "zxc", "")
 	upass = flag.String("upass", "zxc", "")
 	errMAx = flag.Int64("maxerr", 0, "")
@@ -65,36 +66,61 @@ func main() {
 		Identify: ReadMode | WriteMode | DeleteMode | UpdateMode,
 	}
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		//if *errMAx != 0 && errs > *errMAx {
-		//	w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-		//	http.Error(w, "WebDAV: login time is more", http.StatusUnauthorized)
-		//	return
-		//}
-		//username, password, ok := req.BasicAuth()
-		//if !ok {
-		//	w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-		//	w.WriteHeader(http.StatusUnauthorized)
-		//	errs += 1
-		//	return
-		//}
-		//idf := 0
-		//for k, v := range users {
-		//	if k == username && v.Pass == password {
-		//		idf = v.Identify
-		//		break
-		//	}
-		//}
-		//if idf == 0 {
-		//	http.Error(w, "WebDAV: need authorized!", http.StatusUnauthorized)
-		//}
+		// TODO 接下来是关于分享的修改
+		shareName := req.URL.Query().Get("share")
+		sharePass := req.URL.Query().Get("pass")
+		// 权限
+		idf := 0
+		sharePath := ""
+		if shareName != "" {
+			share := GetShare(shareName)
+			if share.Path == "" {
+				w.WriteHeader(404)
+				w.Write([]byte("文件不支持或者取消分享了"))
+				return
+			}
+			if sharePass != share.Pass {
+				w.Write([]byte("校验密码错误"))
+				return
+			}
+			idf = share.Idf
+			sharePath = share.Path
+		}
+		if *errMAx != 0 && errs > *errMAx {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			http.Error(w, "WebDAV: login time is more", http.StatusUnauthorized)
+			return
+		}
+		username, password, ok := req.BasicAuth()
+		if !ok {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		for k, v := range users {
+			if k == username && v.Pass == password {
+				idf = v.Identify
+				break
+			}
+		}
+
+		if idf == 0 {
+			http.Error(w, "WebDAV: need authorized!", http.StatusUnauthorized)
+		}
 
 		if req.Method == "GET" {
-			if ReadMode == ReadMode {
+			if idf&ReadMode == ReadMode {
 				tmp, err := template.New("index").Parse(indexHtml)
 				if err != nil {
 					log.Println(err)
 				}
-				data := GetFileInDir(path + req.URL.Path)
+				truePath := path
+				if sharePath != "" {
+					truePath += sharePath
+				} else {
+					truePath += req.URL.Path
+				}
+				data := GetFileInDir(truePath)
 				err = tmp.Execute(w, data)
 				if err != nil {
 					log.Println(err)
@@ -107,19 +133,19 @@ func main() {
 			return
 		}
 		if req.Method == "DELETE" {
-			if DeleteMode != DeleteMode {
+			if idf&DeleteMode != DeleteMode {
 				http.Error(w, "WebDAV: access defined!", http.StatusForbidden)
 				return
 			}
 		}
 		if req.Method == "UPDATE" {
-			if UpdateMode != UpdateMode {
+			if idf&UpdateMode != UpdateMode {
 				http.Error(w, "WebDAV: access defined!", http.StatusForbidden)
 				return
 			}
 		}
 		if req.Method == "POST" {
-			if WriteMode != WriteMode {
+			if idf&WriteMode != WriteMode {
 				http.Error(w, "WebDAV: access defined!", http.StatusForbidden)
 				return
 			}
@@ -131,7 +157,7 @@ func main() {
 
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
-		log.Panicln(err, "err")
+		log.Panicln(err)
 	}
 }
 

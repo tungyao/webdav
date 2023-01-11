@@ -9,6 +9,10 @@
         .is-dir {
             color: darkgreen;
         }
+        table{  line-height:25px;}
+        th{ border:1px solid #aaa}
+        td{  text-align:center;border:1px solid #aaa}
+        tr:hover{ background-color:#FF9}
         .is-file {
             color: black;
         }
@@ -16,17 +20,31 @@
     <title>Document</title>
 </head>
 <body>
-<table>
-    <tr>
-        <td>File name</td>
-        <td>File size</td>
-    </tr>
-    {{range $k,$v:= .Files}}
-    <tr>
-        <td><a href="/{{$v.Name}}" class="{{if $v.IsDir}} is-dir {{end}}" {{if $v.IsDir}} {{else}} download="{{$v.Name}}" {{end}}>{{$v.Name}}</a></td>
-        <td>{{$v.Size}}</td>
-    </tr>
-    {{end}}
-</table>
+<div style="display: flex;justify-content: center;flex-flow: column nowrap;align-items: center;">
+    <pre>
+
+  _
+ | |_ _   _ _ __   __ _   _ __   __ _ ___
+ | __| | | | '_ \ / _` | | '_ \ / _` / __|
+ | |_| |_| | | | | (_| | | | | | (_| \__ \
+  \__|\__,_|_| |_|\__, | |_| |_|\__,_|___/
+                  |___/
+
+</pre>
+    <table>
+        <tr>
+            <td>File name</td>
+            <td>File size</td>
+        </tr>
+        {{range $k,$v:= .Files}}
+        <tr>
+            <td><a href="/{{$v.Name}}" class="{{if $v.IsDir}} is-dir {{end}}" {{if $v.IsDir}} {{else}}
+                   download="{{$v.Name}}" {{end}}>{{$v.Name}}</a></td>
+            <td class="{{if $v.IsDir}} is-dir {{end}}">{{$v.Size}}</td>
+        </tr>
+        {{end}}
+    </table>
+</div>
+
 </body>
 </html>
