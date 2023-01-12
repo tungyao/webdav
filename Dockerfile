@@ -1,7 +1,7 @@
 FROM ubuntu
 WORKDIR /home
 COPY ./webdav /home/webdav
-COPY ./main.db /home/webdav/db/main.db
+COPY ./main.db /home/db/main.db
 RUN chmod +x /home/webdav
 ENV UNAME = "zxc"
 ENV UPASS = "zxc"
