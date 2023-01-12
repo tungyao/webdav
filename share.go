@@ -8,9 +8,13 @@ import (
 
 var db *sql.DB
 
-// 初始化数据库
-func init() {
-	dbs, err := sql.Open("sqlite3", "main.db")
+// StartDb 初始化数据库
+func StartDb() {
+	p := "main.db"
+	if *isDocker == 1 {
+		p = "./db/main.db"
+	}
+	dbs, err := sql.Open("sqlite3", p)
 	if err != nil {
 		log.Println(err)
 	}

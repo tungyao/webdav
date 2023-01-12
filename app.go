@@ -42,18 +42,24 @@ var (
 	indexHtml string
 )
 
+var (
+	addr     *string
+	path     = "/mnt"
+	uname    *string
+	upass    *string
+	errs     int64
+	errMAx   *int64
+	isDocker *int64
+)
+
 func main() {
 	log.SetFlags(log.Llongfile)
-	var addr *string
-	var path = "/mnt"
-	var uname *string
-	var upass *string
-	var errs int64
-	var errMAx *int64
+
 	addr = flag.String("addr", ":80", "")
 	uname = flag.String("uname", "zxc", "")
 	upass = flag.String("upass", "zxc", "")
 	errMAx = flag.Int64("maxerr", 0, "")
+	isDocker = flag.Int64("docker", 0, "")
 	flag.Parse()
 
 	fmt.Println(*addr, path, *uname, *upass, *errMAx)
@@ -121,6 +127,9 @@ func main() {
 					truePath += req.URL.Path
 				}
 				data := GetFileInDir(truePath)
+				for _, i2 := range data.Files {
+					i2.Path = strings.TrimPrefix(req.URL.Path+"/"+i2.Name, "/")
+				}
 				err = tmp.Execute(w, data)
 				if err != nil {
 					log.Println(err)
@@ -165,6 +174,7 @@ type FileSingle struct {
 	IsDir bool   // 是否是目录
 	Size  string // 大小
 	Name  string // 名称
+	Path  string
 }
 type FileWalk struct {
 	Total int // 总共大小

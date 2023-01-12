@@ -38,7 +38,7 @@
         </tr>
         {{range $k,$v:= .Files}}
         <tr>
-            <td><a href="/{{$v.Name}}" class="{{if $v.IsDir}} is-dir {{end}}" {{if $v.IsDir}} {{else}}
+            <td><a href="/{{$v.Path}}" class="{{if $v.IsDir}} is-dir {{end}}" {{if $v.IsDir}} {{else}}
                    download="{{$v.Name}}" {{end}}>{{$v.Name}}</a></td>
             <td class="{{if $v.IsDir}} is-dir {{end}}">{{$v.Size}}</td>
         </tr>
