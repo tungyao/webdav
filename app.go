@@ -44,8 +44,8 @@ var (
 
 var (
 	addr *string
-	//path     = "/mnt"
-	path     = "/"
+	path = "/mnt"
+	//path     = "/"
 	uname    *string
 	upass    *string
 	errs     int64
@@ -56,7 +56,7 @@ var (
 func main() {
 	log.SetFlags(log.Llongfile)
 
-	addr = flag.String("addr", ":9000", "")
+	addr = flag.String("addr", ":80", "")
 	uname = flag.String("uname", "zxc", "")
 	upass = flag.String("upass", "zxc", "")
 	errMAx = flag.Int64("maxerr", 0, "")
