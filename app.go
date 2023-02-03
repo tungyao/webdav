@@ -43,8 +43,9 @@ var (
 )
 
 var (
-	addr     *string
-	path     = "/mnt"
+	addr *string
+	//path     = "/mnt"
+	path     = "/"
 	uname    *string
 	upass    *string
 	errs     int64
@@ -55,7 +56,7 @@ var (
 func main() {
 	log.SetFlags(log.Llongfile)
 
-	addr = flag.String("addr", ":80", "")
+	addr = flag.String("addr", ":9000", "")
 	uname = flag.String("uname", "zxc", "")
 	upass = flag.String("upass", "zxc", "")
 	errMAx = flag.Int64("maxerr", 0, "")
@@ -128,7 +129,10 @@ func main() {
 				}
 				data := GetFileInDir(truePath)
 				for _, i2 := range data.Files {
-					i2.Path = strings.TrimPrefix(req.URL.Path+"/"+i2.Name, "/")
+					i2.Path = "/" + strings.TrimPrefix(req.URL.Path+"/"+i2.Name, "//")
+					if strings.HasPrefix(i2.Path, "//") {
+						i2.Path = strings.TrimPrefix(i2.Path, "/")
+					}
 				}
 				err = tmp.Execute(w, data)
 				if err != nil {
