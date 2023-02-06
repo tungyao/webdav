@@ -46,7 +46,7 @@ var (
 var (
 	addr *string
 	path = "/mnt"
-	//path     = "/"
+	//path     = "/home"
 	uname    *string
 	upass    *string
 	errs     int64
@@ -56,7 +56,7 @@ var (
 
 func main() {
 	log.SetFlags(log.Llongfile)
-
+	fmt.Println("v1.9.2")
 	addr = flag.String("addr", ":80", "")
 	uname = flag.String("uname", "zxc", "")
 	upass = flag.String("upass", "zxc", "")
@@ -116,40 +116,6 @@ func main() {
 			http.Error(w, "WebDAV: need authorized!", http.StatusUnauthorized)
 		}
 
-		if req.Method == "GET" {
-			if idf&ReadMode == ReadMode {
-				info, err := os.Stat(req.URL.Path)
-				if err != nil && info != nil && info.IsDir() == false {
-					goto end
-				}
-				tmp, err := template.New("index").Parse(indexHtml)
-				if err != nil {
-					log.Println(err)
-				}
-				truePath := path
-				if sharePath != "" {
-					truePath += sharePath
-				} else {
-					truePath += req.URL.Path
-				}
-				data := GetFileInDir(truePath)
-				for _, i2 := range data.Files {
-					i2.Path = "/" + strings.TrimPrefix(req.URL.Path+"/"+i2.Name, "//")
-					if strings.HasPrefix(i2.Path, "//") {
-						i2.Path = strings.TrimPrefix(i2.Path, "/")
-					}
-				}
-				err = tmp.Execute(w, data)
-				if err != nil {
-					log.Println(err)
-				}
-				return
-				//http.FileServer(http.Dir(path)).ServeHTTP(w, req)
-			} else {
-				http.Error(w, "WebDAV: access defined!", http.StatusForbidden)
-			}
-			return
-		}
 		if req.Method == "DELETE" {
 			if idf&DeleteMode != DeleteMode {
 				http.Error(w, "WebDAV: access defined!", http.StatusForbidden)
@@ -168,6 +134,42 @@ func main() {
 				return
 			}
 		}
+		if req.Method == "GET" {
+			if idf&ReadMode == ReadMode {
+				truePath := path
+				if sharePath != "" {
+					truePath += sharePath
+				} else {
+					truePath += req.URL.Path
+				}
+				info, err := os.Stat(truePath)
+				if err == nil && info != nil && info.IsDir() == false {
+					goto end
+				}
+				tmp, err := template.New("index").Parse(indexHtml)
+				if err != nil {
+					log.Println(err)
+				}
+
+				data := GetFileInDir(truePath)
+				for _, i2 := range data.Files {
+					i2.Path = "/" + strings.TrimPrefix(req.URL.Path+"/"+i2.Name, "//")
+					if strings.HasPrefix(i2.Path, "//") {
+						i2.Path = strings.TrimPrefix(i2.Path, "/")
+					}
+				}
+				err = tmp.Execute(w, data)
+				if err != nil {
+					log.Println(err)
+				}
+				return
+				//http.FileServer(http.Dir(path)).ServeHTTP(w, req)
+			} else {
+				http.Error(w, "WebDAV: access defined!", http.StatusForbidden)
+			}
+			return
+		}
+
 		goto end
 	end:
 		fss.ServeHTTP(w, req)
