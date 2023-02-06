@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -117,6 +118,10 @@ func main() {
 
 		if req.Method == "GET" {
 			if idf&ReadMode == ReadMode {
+				info, err := os.Stat(req.URL.Path)
+				if err != nil && info != nil && info.IsDir() == false {
+					goto end
+				}
 				tmp, err := template.New("index").Parse(indexHtml)
 				if err != nil {
 					log.Println(err)
@@ -163,6 +168,8 @@ func main() {
 				return
 			}
 		}
+		goto end
+	end:
 		fss.ServeHTTP(w, req)
 	})
 
@@ -189,7 +196,7 @@ type FileWalk struct {
 func GetFileInDir(path string) *FileWalk {
 	cmd, err := exec.Command("ls", path, "-lA", "--no-group", "-g").CombinedOutput()
 	if err != nil {
-		log.Println(err)
+		//log.Println(err)
 	}
 	// 开始解析
 	buf := bufio.NewReader(bytes.NewReader(cmd))
