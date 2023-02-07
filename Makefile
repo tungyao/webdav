@@ -1,4 +1,4 @@
-version = v1.9.2
+version = v1.9.3
 
 build:
 	go build .

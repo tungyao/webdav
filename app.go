@@ -196,7 +196,9 @@ type FileWalk struct {
 
 // GetFileInDir 获取目录下的文件
 func GetFileInDir(path string) *FileWalk {
-	cmd, err := exec.Command("ls", path, "-lA", "--no-group", "-g").CombinedOutput()
+	cmd, err := exec.
+		Command("sh", "-c", fmt.Sprintf(`ls '%s' -lA -h --no-group -g -t --time-style=+%s | awk '{print($1,$3,$1="",$2="",$3="",$4="",$0)}'`, path, "%H")).
+		CombinedOutput()
 	if err != nil {
 		//log.Println(err)
 	}
@@ -208,42 +210,41 @@ func GetFileInDir(path string) *FileWalk {
 		if c == io.EOF {
 			break
 		}
-		str := string(line)
-		if strings.HasPrefix(str, "total") {
-			filewalk.Total, err = strconv.Atoi(str[6:])
+		if bytes.HasPrefix(line, []byte("total")) {
+			filewalk.Total, err = strconv.Atoi(string(line[6:]))
 			continue
 		}
 		// 直接省略前3个字段
-		counter := 0
+		//counter := 0
 		f := &FileSingle{
 			IsDir: false,
 			Size:  "",
 			Name:  "",
 		}
-		if str[0] == 'd' {
+		first := 11
+		if line[0] == 'd' {
 			f.IsDir = true
 		}
-		first := 0
-		for i := 0; i < len(str)-1; i++ {
-			if str[i] == ' ' {
-				counter += 1
-				if counter <= 2 {
-					first = i
-					continue
-				}
-				key := line[first:i]
-				if len(key) == 1 && key[0] == 32 {
-					first = i
-					continue
-				}
-				if f.Size == "" {
-					n, _ := strconv.Atoi(str[first+1 : i])
-					f.Size = HumanFileSize(n)
-				}
+		end := 11
+		for i := 11; i < len(line); i++ {
+			// 获取到size
+			if f.Size == "" && line[i] != ' ' {
 				first = i
+				end = i
+				for line[end] != ' ' {
+					end += 1
+				}
+				i = end
+				f.Size = string(line[first:end])
+				continue
+			}
+			// 获取到name
+			if f.Name == "" && line[i] != ' ' {
+				first = i
+				f.Name = string(line[first:])
+				continue
 			}
 		}
-		f.Name = str[first+1:]
 		filewalk.Files = append(filewalk.Files, f)
 	}
 	return filewalk
