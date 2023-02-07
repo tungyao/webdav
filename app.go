@@ -197,7 +197,7 @@ type FileWalk struct {
 // GetFileInDir 获取目录下的文件
 func GetFileInDir(path string) *FileWalk {
 	cmd, err := exec.
-		Command("sh", "-c", fmt.Sprintf(`ls '%s' -lA -h --no-group -g -t --time-style=+%s | awk '{print($1,$3,$1="",$2="",$3="",$4="",$0)}'`, path, "%H")).
+		Command("sh", "-c", fmt.Sprintf(`ls '%s' -lA -h --no-group -g --time-style=+%s | awk '{print($1,$3,$1="",$2="",$3="",$4="",$0)}'`, path, "%H")).
 		CombinedOutput()
 	if err != nil {
 		//log.Println(err)
