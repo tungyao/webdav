@@ -56,7 +56,7 @@ var (
 
 func main() {
 	log.SetFlags(log.Llongfile)
-	fmt.Println("v1.9.2")
+	fmt.Println("v1.9.5")
 	addr = flag.String("addr", ":80", "")
 	uname = flag.String("uname", "zxc", "")
 	upass = flag.String("upass", "zxc", "")
@@ -74,7 +74,6 @@ func main() {
 		Identify: ReadMode | WriteMode | DeleteMode | UpdateMode,
 	}
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		// TODO 接下来是关于分享的修改
 		shareName := req.URL.Query().Get("share")
 		sharePass := req.URL.Query().Get("pass")
 		// 权限
@@ -111,7 +110,6 @@ func main() {
 				break
 			}
 		}
-
 		if idf == 0 {
 			http.Error(w, "WebDAV: need authorized!", http.StatusUnauthorized)
 		}
@@ -122,14 +120,14 @@ func main() {
 				return
 			}
 		}
-		if req.Method == "UPDATE" {
-			if idf&UpdateMode != UpdateMode {
+		if req.Method == "PUT" || req.Method == "MKCOL" {
+			if idf&WriteMode != WriteMode {
 				http.Error(w, "WebDAV: access defined!", http.StatusForbidden)
 				return
 			}
 		}
-		if req.Method == "POST" {
-			if idf&WriteMode != WriteMode {
+		if req.Method == "MOVE" || req.Method == "PROPPATCH" {
+			if idf&UpdateMode != UpdateMode {
 				http.Error(w, "WebDAV: access defined!", http.StatusForbidden)
 				return
 			}
