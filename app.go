@@ -46,7 +46,7 @@ var (
 var (
 	addr *string
 	path = "/mnt"
-	//path     = "/home"
+	//path     = "/home/dong"
 	uname    *string
 	upass    *string
 	errs     int64
@@ -56,13 +56,15 @@ var (
 
 func main() {
 	log.SetFlags(log.Llongfile)
-	fmt.Println("v1.9.5")
+	fmt.Println("v1.9.6")
 	addr = flag.String("addr", ":80", "")
 	uname = flag.String("uname", "zxc", "")
 	upass = flag.String("upass", "zxc", "")
 	errMAx = flag.Int64("maxerr", 0, "")
-	isDocker = flag.Int64("docker", 0, "")
+	isDocker = flag.Int64("docker", 1, "")
 	flag.Parse()
+
+	StartDb()
 
 	fmt.Println(*addr, path, *uname, *upass, *errMAx)
 	fss := &webdav.Handler{
@@ -136,13 +138,14 @@ func main() {
 			if idf&ReadMode == ReadMode {
 				truePath := path
 				if sharePath != "" {
-					truePath += sharePath
+					truePath += sharePath + req.URL.Path
 				} else {
 					truePath += req.URL.Path
 				}
 				info, err := os.Stat(truePath)
 				if err == nil && info != nil && info.IsDir() == false {
-					goto end
+					SendFile(w, req, truePath)
+					return
 				}
 				tmp, err := template.New("index").Parse(indexHtml)
 				if err != nil {
@@ -155,6 +158,7 @@ func main() {
 					if strings.HasPrefix(i2.Path, "//") {
 						i2.Path = strings.TrimPrefix(i2.Path, "/")
 					}
+					i2.Share = shareName
 				}
 				err = tmp.Execute(w, data)
 				if err != nil {
@@ -186,6 +190,7 @@ type FileSingle struct {
 	Size  string // 大小
 	Name  string // 名称
 	Path  string
+	Share string
 }
 type FileWalk struct {
 	Total int // 总共大小
@@ -258,4 +263,75 @@ func HumanFileSize(size int) string {
 		return strconv.Itoa(size/(1<<10)) + "KB"
 	}
 	return strconv.Itoa(size) + " bytes"
+}
+
+func SendFile(writer http.ResponseWriter, request *http.Request, path string) {
+	f, _ := os.Open(path)
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		log.Println("sendFile1", err.Error())
+		http.NotFound(writer, request)
+		return
+	}
+	writer.Header().Add("Accept-Ranges", "bytes")
+	writer.Header().Add("Content-Disposition", "attachment; filename="+info.Name())
+	var start, end int64
+	//fmt.Println(request.Header,"\n")
+	if r := request.Header.Get("Range"); r != "" {
+		if strings.Contains(r, "bytes=") && strings.Contains(r, "-") {
+
+			fmt.Sscanf(r, "bytes=%d-%d", &start, &end)
+			if end == 0 {
+				end = info.Size() - 1
+			}
+			if start > end || start < 0 || end < 0 || end >= info.Size() {
+				writer.WriteHeader(http.StatusRequestedRangeNotSatisfiable)
+				log.Println("sendFile2 start:", start, "end:", end, "size:", info.Size())
+				return
+			}
+			writer.Header().Add("Content-Length", strconv.FormatInt(end-start+1, 10))
+			writer.Header().Add("Content-Range", fmt.Sprintf("bytes %v-%v/%v", start, end, info.Size()))
+			writer.WriteHeader(http.StatusPartialContent)
+		} else {
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	} else {
+		writer.Header().Add("Content-Length", strconv.FormatInt(info.Size(), 10))
+		start = 0
+		end = info.Size() - 1
+	}
+	_, err = f.Seek(start, 0)
+	if err != nil {
+		log.Println("sendFile3", err.Error())
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	n := 1024
+	buf := make([]byte, n)
+	for {
+		if end-start+1 < int64(n) {
+			n = int(end - start + 1)
+		}
+		_, err := f.Read(buf[:n])
+		if err != nil {
+			log.Println("1:", err)
+			if err != io.EOF {
+				log.Println("error:", err)
+			}
+			return
+		}
+		err = nil
+		_, err = writer.Write(buf[:n])
+		if err != nil {
+			//log.Println(err, start, end, info.Size(), n)
+			return
+		}
+		start += int64(n)
+		if start >= end+1 {
+			return
+		}
+	}
+
 }

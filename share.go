@@ -33,6 +33,9 @@ type ShareObj struct {
 func GetShare(shareName string) *ShareObj {
 	row := db.QueryRow("select path,pass,idf from share where is_delete=0 and link=?", shareName)
 	obj := &ShareObj{}
-	row.Scan(&obj.Path, &obj.Pass, &obj.Idf)
+	err := row.Scan(&obj.Path, &obj.Pass, &obj.Idf)
+	if err != nil {
+		log.Println(err)
+	}
 	return obj
 }
